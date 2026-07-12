@@ -241,6 +241,18 @@ class SnowClient:
         result = self._request(f"/api/now/table/{table}", params)
         return result.get("result", [])
 
+    def create_record(self, table: str, fields: dict) -> dict:
+        """Create a new record via POST. Returns the created record."""
+        url = f"{INSTANCE}/api/now/table/{table}"
+        body = json.dumps(fields).encode()
+        req = urllib.request.Request(url, data=body, method="POST", headers=self._headers)
+        try:
+            with urllib.request.urlopen(req) as resp:
+                return json.loads(resp.read()).get("result", {})
+        except urllib.error.HTTPError as e:
+            body = e.read().decode()
+            raise RuntimeError(f"HTTP {e.code}: {body[:500]}") from e
+
     def patch_record(self, table: str, sys_id: str, fields: dict) -> dict:
         """Update fields on a single record via PATCH."""
         url = f"{INSTANCE}/api/now/table/{table}/{sys_id}"

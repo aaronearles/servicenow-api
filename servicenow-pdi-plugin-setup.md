@@ -5,10 +5,14 @@ The two plugins below are required for SAFe/EAP tables — they're not active by
 
 | Plugin ID | Name | Required for |
 |-----------|------|--------------|
-| `com.snc.sdlc.scrum_program` | Agile Development (SAFe/Program) | `rm_story`, `rm_sprint`, scrum roles |
-| `sn_apw_advanced` | Strategic Planning Workspace | EAP UI, `sn_apw_advanced.*` roles |
+| `sn_apw_advanced` | Strategic Planning Workspace | EAP UI, `sn_apw_advanced.*` roles — install first |
+| `com.snc.sdlc.scrum_program` | Scrum Programs (SAFe/PI planning) | SAFe nav, Program Increments, Agile Teams |
 
-Install `com.snc.sdlc.scrum_program` first — `sn_apw_advanced` depends on it.
+Install `sn_apw_advanced` first — it pulls in Agile Development 2.0 (`com.snc.sdlc.agile.2.0`)
+as a dependency. Then install `com.snc.sdlc.scrum_program` separately — it shows a for-fee
+subscription warning but PDIs allow installation without an entitlement, just click Install.
+After both are installed, log out and back in (or hit `/cache.do` first) for SAFe nav items to
+appear. The Strategic Planning Workspace is at `/now/sow/home`.
 
 ---
 
@@ -31,33 +35,39 @@ Should return `{"result": []}` (empty is fine — means the table exists). A `40
 
 ---
 
-## Option B — REST API
+## Option B — REST API *(untested — may be worth exploring)*
 
-The Plugin API (`/api/now/v1/plugins/`) requires a separate REST API Access Policy from the
-Table API one. Set that up first, then run the script below.
+The Plugin API (`/api/now/v1/plugins/`) is an internal system API — it does not appear in the
+REST API Access Policy picker and cannot be unlocked for API key auth that way. It requires
+an active admin browser session (cookie auth). Use `debug_auth.py` to confirm you have a valid
+cookie session, then run the script below.
 
-### One-time: add Plugin API access policy
-
-1. **System Web Services > API Access Policies > REST API Access Policies > New**
-2. **Name**: `plugin-api-key-policy`
-3. **Active**: checked
-4. **REST API**: `Plugin Management` (search for it in the picker)
-5. Leave "Apply to all methods / resources / versions" checked
-6. **Inbound authentication profiles** related list → Insert a new row → select your existing
-   API key profile (the one from `servicenow-pdi-api-key-setup.md`)
-7. Submit
-
-### Activate plugins via script
+### Activate plugins via script (cookie auth required)
 
 ```python
-from snow_client import SnowClient, INSTANCE
+# Requires cookie auth — API key is not accepted by the Plugin API.
+# Capture cookies via Cookie-Monster first, then run this.
+from snow_client import SnowClient, INSTANCE, _find_api_key, load_cookies
 import json, urllib.request, urllib.error
 
-c = SnowClient()
+# Force cookie auth even if SNOW_API_KEY is set
+if _find_api_key():
+    cookies = load_cookies()
+    from snow_client import _fetch_session_info, cookie_header
+    g_ck, _ = _fetch_session_info(cookies)
+    headers = {
+        "Cookie": cookie_header(cookies),
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "X-UserToken": g_ck,
+    }
+else:
+    c = SnowClient()
+    headers = c._headers
 
 PLUGINS = [
-    'com.snc.sdlc.scrum_program',  # install first — sn_apw_advanced depends on it
-    'sn_apw_advanced',
+    'sn_apw_advanced',             # install first — pulls in Agile Development 2.0
+    'com.snc.sdlc.scrum_program',  # for-fee warning but installs fine on PDI
 ]
 
 for pid in PLUGINS:
@@ -66,7 +76,7 @@ for pid in PLUGINS:
         f'{INSTANCE}/api/now/v1/plugins/{pid}/activate',
         data=b'{}',
         method='POST',
-        headers=c._headers,
+        headers=headers,
     )
     try:
         with urllib.request.urlopen(req) as resp:
