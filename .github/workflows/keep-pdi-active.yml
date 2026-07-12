@@ -1,0 +1,25 @@
+name: Keep PDI Active
+
+# ServiceNow PDIs are reclaimed after 10 days of inactivity.
+# This workflow pings the instance every 7 days to keep it alive.
+#
+# Required secret: SNOW_API_KEY (Settings > Secrets > Actions)
+#
+# Note: GitHub disables scheduled workflows on repos with no pushes in 60 days.
+# If that happens, re-enable it manually under Actions > Keep PDI Active > Enable.
+
+on:
+  schedule:
+    - cron: '0 12 */7 * *'  # noon UTC every 7 days
+  workflow_dispatch:          # allow manual trigger from Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ping ServiceNow PDI
+        env:
+          SNOW_API_KEY: ${{ secrets.SNOW_API_KEY }}
+        run: python3 snow_client.py
