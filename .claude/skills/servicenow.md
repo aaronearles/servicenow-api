@@ -56,12 +56,14 @@ See `servicenow-pdi-plugin-setup.md` for full walkthrough.
 
 ## Catalog Item Variables
 
-### Variable types (item_option_new.type)
-| Value | Type |
-|-------|------|
-| `1` | Single Line Text |
-| `3` | Multiple Choice (select box) |
-| `5` | Integer |
+### Variable types (item_option_new.type) — confirmed on this PDI
+| Value | Type | Notes |
+|-------|------|-------|
+| `6` | Single Line Text | Confirmed — use for hostname, text inputs, integers (validate in script) |
+| `2` | Multi Line Text | Confirmed — use for reason/description fields |
+| `3` | Multiple Choice | Confirmed — use for select boxes; choices go in `question_choice` |
+| `1` | ❌ Yes/No dropdown | Do NOT use for text fields |
+| `5` | ❌ Empty dropdown | Do NOT use for integer fields |
 
 Select box choices stored in `question_choice` table, linked via `question` field.
 
@@ -107,19 +109,38 @@ options = c.get_table(
 
 ---
 
-## Deploy a VM Catalog Item
+## Known sys_ids
 
+| Record | sys_id |
+|--------|--------|
+| Service Catalog | `e0d08b13c3330100c8b837659bba8fb4` |
+| Server Standard Changes (category) | `b3ecbbbf47700200e90d87e8dee49081` |
+
+When creating catalog items via API, set both `catalogs` and `category` fields or the item won't appear in `/sp`.
+
+## Catalog Items
+
+### Deploy a VM
 - **sys_id**: `515eb86d73cac3102687fb204ab8b7d4`
-- **Variables** (in order):
 
 | order | name | type | default |
 |-------|------|------|---------|
-| 100 | `hostname` | Single Line Text | — |
-| 200 | `cpu_count` | Integer | 2 |
-| 300 | `memory_mb` | Integer | 2048 |
-| 400 | `vm_template` | Multiple Choice | ubuntu-2404 |
+| 100 | `hostname` | Single Line Text (6) | — |
+| 200 | `cpu_count` | Single Line Text (6) | 2 |
+| 300 | `memory_mb` | Single Line Text (6) | 2048 | patched from type 5 |
+| 400 | `vm_template` | Multiple Choice (3) | ubuntu-2404 |
 
 - `vm_template` choices: `ubuntu-2404` (Ubuntu 24.04), `debian-12` (Debian 12)
+
+### Decommission a VM
+- **sys_id**: `8a8228b173c647102687fb204ab8b7d6`
+
+| order | name | type | notes |
+|-------|------|------|-------|
+| 100 | `hostname` | Single Line Text (6) | VM to destroy |
+| 200 | `vm_id` | Single Line Text (6) | Proxmox VM ID — validate as integer in script |
+| 300 | `confirm_hostname` | Single Line Text (6) | Must match hostname — irreversible action |
+| 400 | `decommission_reason` | Multi Line Text (2) | Audit trail |
 
 ---
 

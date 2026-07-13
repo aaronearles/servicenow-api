@@ -265,6 +265,17 @@ class SnowClient:
             body = e.read().decode()
             raise RuntimeError(f"HTTP {e.code}: {body[:500]}") from e
 
+    def delete_record(self, table: str, sys_id: str) -> None:
+        """Delete a record via DELETE."""
+        url = f"{INSTANCE}/api/now/table/{table}/{sys_id}"
+        req = urllib.request.Request(url, method="DELETE", headers=self._headers)
+        try:
+            with urllib.request.urlopen(req) as resp:
+                return  # 204 No Content on success
+        except urllib.error.HTTPError as e:
+            body = e.read().decode()
+            raise RuntimeError(f"HTTP {e.code}: {body[:500]}") from e
+
     def get_record(self, table: str, sys_id: str, fields: list[str] | None = None) -> dict:
         params = {}
         if fields:

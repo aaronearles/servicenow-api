@@ -243,14 +243,16 @@ def close_ritm(client, ritm_sys_id: str, vm_ip: str, success: bool):
 
 ## Build Order
 
-- [ ] **Phase 1** — Create catalog item + variables in ServiceNow UI, verify RITM is created on submit
-- [ ] **Phase 1** — Write + test `get_ritm_variables()` against a real RITM
-- [ ] **Phase 3** — Set up Terraform Proxmox config, test a manual apply outside of ServiceNow
+- [x] **Phase 1** — Create "Deploy a VM" catalog item + variables via API (`sc_cat_item`, `item_option_new`, `question_choice`)
+- [x] **Phase 1** — Create "Decommission a VM" catalog item + variables via API
+- [x] **Phase 1** — Verified RITM created on submit (RITM0010001 / REQ0010001)
+- [x] **Phase 1** — `get_ritm_variables()` tested and working — dot-walk on `sc_item_option` confirmed
+- [x] **Phase 1** — `SnowClient.create_record()` and `delete_record()` added
+- [ ] **Phase 3** — Set up Terraform Proxmox config, test a manual `apply` outside of ServiceNow
 - [ ] **Phase 4** — Write `provision.py` (Option A — manual trigger first)
 - [ ] **Phase 4** — Test full pipeline: submit catalog request → run script → VM appears in Proxmox
-- [ ] **Phase 5** — Add RITM writeback
-- [ ] **Phase 2B** — Wrap in GitHub Actions scheduled workflow once Option A is solid
-- [ ] **Phase 2C** — Outbound webhook trigger (optional, if latency matters)
+- [ ] **Phase 5** — Add RITM writeback (state → Closed Complete, work notes with VM IP)
+- [ ] **Phase 2B** — Wrap in GitHub Actions scheduled workflow on self-hosted runner
 
 ---
 
