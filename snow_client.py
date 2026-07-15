@@ -3,7 +3,7 @@ ServiceNow REST API client — API key (preferred) or cookie-based session auth.
 
 Auth resolution order:
     1. SNOW_API_KEY env var or .env file  (preferred — no browser session needed)
-    2. Cookie-Monster store: %USERPROFILE%\.session-cookies\<hostname>.env
+    2. Cookie-Monster store: %USERPROFILE%\\.session-cookies\\<hostname>.env
     3. Legacy ~/.snow_cookies
 
 Usage:
@@ -73,7 +73,7 @@ def load_cookies(path: Path | None = None) -> dict[str, str]:
 
     Resolution order:
       1. Explicit path argument (if provided)
-      2. %USERPROFILE%\.session-cookies\<hostname>.env  (Cookie-Monster)
+      2. %USERPROFILE%\\.session-cookies\\<hostname>.env  (Cookie-Monster)
       3. ~/.snow_cookies  (legacy, supports KEY=VALUE and .env shell-variable format)
     """
     if path is not None:
