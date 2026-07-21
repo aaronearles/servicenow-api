@@ -209,7 +209,19 @@ class SnowClient:
         req = urllib.request.Request(url, headers=self._headers)
         try:
             with urllib.request.urlopen(req) as resp:
-                return json.loads(resp.read())
+                body = resp.read()
+                if not body.strip():
+                    raise RuntimeError(
+                        f"Empty response body from {path} (HTTP {resp.status}). "
+                        "The PDI may be hibernating or under maintenance — "
+                        "try logging into the instance directly to wake it, then retry."
+                    )
+                try:
+                    return json.loads(body)
+                except json.JSONDecodeError as e:
+                    raise RuntimeError(
+                        f"Non-JSON response from {path}: {body[:500]!r}"
+                    ) from e
         except urllib.error.HTTPError as e:
             body = e.read().decode()
             if e.code in (301, 302, 303):
@@ -325,6 +337,10 @@ if __name__ == "__main__":
         client = SnowClient()
     except (FileNotFoundError, RuntimeError) as e:
         print(f"ERROR: {e}")
+        sys.exit(1)
+
+    if not client.session_username:
+        print("ERROR: Could not resolve current user — PDI may be unreachable or hibernating.")
         sys.exit(1)
 
     print(f"  Authenticated as: {client.session_full_name} ({client.session_username})")
